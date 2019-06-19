@@ -5,6 +5,7 @@ namespace adidasDV\Http\Controllers;
 use adidasDV\Modelos\Articulo;
 use adidasDV\Modelos\TipoArticulo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ArticulosController extends Controller
 {
@@ -15,9 +16,9 @@ class ArticulosController extends Controller
      */
     public function index(Articulo $articulo)
     {
-        $articulo = articulo->all();
+        $articulos = $articulo->all();
         
-        return view('panel.articulos.index')->with('articulo', $articulo);
+        return view('panel.articulos.index')->with('articulos', $articulos);
     }
 
     /**
@@ -27,7 +28,7 @@ class ArticulosController extends Controller
      */
     public function create(TipoArticulo $tipoarticulo)
     {
-        $tipos = $$tipoarticulo->all()->pluck('id_tipo_articulo','nombre');
+        $tipos = $tipoarticulo->all()->pluck('nombre','id_tipo_articulo');
         
         return view('panel.articulos.form',compact('tipos'));
     }
@@ -43,18 +44,31 @@ class ArticulosController extends Controller
         $validaciones = [
             "nombre" => "required|string",
             "imagen" => "required",
-            "id_tipo_articulo" => "required|exists:tipo_articulo,id_tipo_articulo",
+            "id_tipo_articulo" => "required|exists:tipo_articulo,id_tipo_articulo"
         ];
-
-        $validacion = $request->validate($validaciones);
-
-
+        
+        $mensajes = [
+            "id_tipo_articulo.required" => "El campo tipo de articulo es requerido",
+            "id_tipo_articulo.exists" => "El tipo de articulo seleccionado no existe"
+        ];
+        
+        $validacion = Validator::make($request->all(),$validaciones,$mensajes);
+        
+        if($validacion->fails())
+            return redirect()->back()->withErrors($validacion);
+        
         // pasó la validación
 
-        $articulo = Articulo::create($request->all());
+        $request->imagen->storeAs("articulos",$request->nombre.".".$request->imagen->extension());
+
+        $data = $request->except("imagen");
+
+        $data["imagen"] = "storage/articulos/".$request->nombre.".".$request->imagen->extension();
+        
+        $articulo = Articulo::create($data);
 
         if($articulo)
-            return redirect()->route("articulos.index");
+            return redirect()->route('articulos.index');
     }
 
     /**
@@ -74,9 +88,16 @@ class ArticulosController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit($id, TipoArticulo $tipoArticulo, Articulo $articulo)
     {
-        //
+        $articulo = $articulo->find($id);
+        
+        if(!$articulo)
+            return redirect()->back()->withErrors("El articulo que se quiere editar no existe");
+        
+        $tipo = $tipoArticulo->all()->pluck('nombre','id_tipo_articulo');
+        
+        return view('panel.articulos.form', compact('tipo', 'articulo'));
     }
 
     /**
@@ -88,7 +109,32 @@ class ArticulosController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $articulo = Articulo::find($id);
+        
+        if(!$articulo)
+            return redirect()->back()->withErrors("El articulo a editar no existe");
+        
+        $validaciones = [
+            "nombre" => "required|string",
+            "imagen" => "required",
+            "id_tipo_articulo" => "required|exists:tipo_articulo,id_tipo_articulo"
+        ];
+
+        $validar = $request->validate($validaciones);
+
+        $request->imagen->storeAs("articulos",$request->nombre.".".$request->imagen->extension());
+
+        $data = $request->except("imagen");
+
+        $data["imagen"] = "storage/articulos/".$request->nombre.".".$request->imagen->extension();
+
+
+        if(!$articulo->update($data)):
+            return redirect()->back()->withErrors("No se pudo editar el articulo");
+
+        endif;
+
+        return redirect()->route('articulos.index')->with("ok","El articulo se editó correctamente");
     }
 
     /**
@@ -99,6 +145,12 @@ class ArticulosController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $articulo = Articulo::find($id);
+        
+        if(!$articulo)
+            return redirect()->back()->withErrors("No se puede eliminar el articulo");
+        
+        if($articulo->delete())
+            return redirect()->route('articulos.index')->with("ok","Se borró el articulo seleccionado");
     }
 }

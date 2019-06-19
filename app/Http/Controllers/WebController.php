@@ -16,19 +16,16 @@ class WebController extends Controller
         return view("web.contacto");
 
     }
+    
+    public function sucursales(){
+        return view("web.sucursales");
+
+    }
 
     public function articulos(TipoArticulo $tipoArticulo){
-        /*
-         Cuando me traigo todo un modelo, tengo una forma de pedirle que me traiga tambien sus relaciones (si las voy a usar, es lo más optimo)
+        
+        $tipoArticulos = $tipoArticulo->with("articulo")->get();
 
-        Con el método ->with("relaciones") del modelo ->get()
-         */
-        $tipoArticulo = $tipoArticulo->with("articulo")->get();
-
-        //dd($tipoHabitaciones);
-//        $tipoHabitaciones = [];
-
-        // devolvemos la vista con los tipoHabitaciones
-        return view("web.articulo",compact("tipoarticulos"));
+        return view('web.articulos',compact('tipoArticulos'));
     }
 }

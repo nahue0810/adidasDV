@@ -1,5 +1,5 @@
 #fondo{
-    background: url(../img/estilo/b3esnz5ra34y.jpg);
+    background: url(img/estilo/b3esnz5ra34y.jpg);
     background-attachment: fixed;
     background-size: 100vw 100vh;;
     margin: 0;
@@ -24,9 +24,6 @@
     z-index: 100;
 }
 #Home{
-    background: url(img/estilo/b3esnz5ra34y.jpg);
-    background-attachment: fixed;
-    background-size: 100vw 100vh;;
     margin: auto;
     width: 85%;
     margin-top: 75px;
